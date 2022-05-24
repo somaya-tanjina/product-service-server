@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 var cors = require("cors");
+const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 5000;
 require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
@@ -15,24 +16,68 @@ const client = new MongoClient(uri, {
     serverApi: ServerApiVersion.v1,
 });
 
+//jwt token
+const verifyjwt = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).send({ message: "UnAuthorized access" });
+    }
+    // 6th step to verifyjwt token if it is authentic or not
+    const token = authHeader.split(" ")[1];
+
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+        if (err) {
+            return res.status(403).send({ message: "Forbidden access" });
+        } else {
+            req.decoded = decoded;
+            next();
+        }
+    });
+};
+
 async function run() {
     try {
         await client.connect();
         const productCollection = client
             .db("manufacturer")
             .collection("products");
+
+        const userCollection = client.db("manufacturer").collection("user");
+
         app.get("/products", async (req, res) => {
             const query = {};
             const cursor = await productCollection.find(query).toArray();
             res.send(cursor);
         });
 
-        app.get('/product/:id', async (req, res) => {
+        app.get("/product/:id", async (req, res) => {
             const id = req.params.id;
             const querry = { _id: ObjectId(id) };
             const product = await productCollection.findOne(querry);
             res.send(product);
-        })
+        });
+
+        //user
+        app.put("/user/:email", async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const user = req.body;
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: user,
+            };
+            const result = await userCollection.updateOne(
+                filter,
+                updateDoc,
+                options
+            );
+            const token = jwt.sign(
+                { email: email },
+                process.env.ACCESS_TOKEN_SECRET,
+                { expiresIn: "1h" }
+            );
+            res.send({ result, token });
+        });
     } finally {
         //await client.close();
     }
