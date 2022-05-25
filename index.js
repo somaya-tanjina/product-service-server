@@ -80,37 +80,36 @@ async function run() {
             res.send({ result, token });
         });
 
+        app.post("/orders", async (req, res) => {
+            const item = req.body;
+            const result = await orderCollection.insertOne(item);
+            res.send({ success: true, result });
+            //console.log(result);
+        });
 
+        app.get("/orders", verifyjwt, async (req, res) => {
+            const email = req.query.email;
 
- app.post("/orders", async (req, res) => {
-     const item = req.body;
-     const result = await orderCollection.insertOne(item);
-     res.send({ success: true, result });
-     //console.log(result);
- });
+            const decodedEmail = req.decoded.email;
 
+            if (email === decodedEmail) {
+                const query = { email: email };
+                const bookings = await orderCollection.find(query).toArray();
 
-app.get("/orders", verifyjwt, async (req, res) => {
-    const email = req.query.email;
+                return res.send(bookings);
+            } else {
+                return res.status(403).send({ message: "fobidden Access" });
+            }
+        });
 
-    // 7th step of jwt
-    const decodedEmail = req.decoded.email;
-    // console.log(decodedEmail);
-    // const decodedEmail = patientEmail;
+        //cancel order
 
-    if (email === decodedEmail) {
-        const query = { email: email };
-        const bookings = await orderCollection.find(query).toArray();
-
-        return res.send(bookings);
-    } else {
-        return res.status(403).send({ message: "fobidden Access" });
-    }
-});
-
-
-
-
+        app.delete("/product/:id",verifyjwt, async (req, res) => {
+            const id = req.params.id;
+            const querry = { _id: ObjectId(id) };
+            const deletedItem = await orderCollection.deleteOne(querry);
+            res.send(deletedItem);
+        });
     } finally {
         //await client.close();
     }
