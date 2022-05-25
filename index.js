@@ -43,6 +43,7 @@ async function run() {
             .collection("products");
 
         const userCollection = client.db("manufacturer").collection("user");
+        const orderCollection = client.db("manufacturer").collection("order");
 
         app.get("/products", async (req, res) => {
             const query = {};
@@ -78,6 +79,22 @@ async function run() {
             );
             res.send({ result, token });
         });
+
+
+
+ app.post("/orders", async (req, res) => {
+     const item = req.body;
+     const result = await orderCollection.insertOne(item);
+     res.send({ success: true, result });
+     //console.log(result);
+ });
+
+
+
+
+
+
+
     } finally {
         //await client.close();
     }
