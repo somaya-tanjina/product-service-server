@@ -90,7 +90,23 @@ async function run() {
  });
 
 
+app.get("/orders", verifyjwt, async (req, res) => {
+    const email = req.query.email;
 
+    // 7th step of jwt
+    const decodedEmail = req.decoded.email;
+    // console.log(decodedEmail);
+    // const decodedEmail = patientEmail;
+
+    if (email === decodedEmail) {
+        const query = { email: email };
+        const bookings = await orderCollection.find(query).toArray();
+
+        return res.send(bookings);
+    } else {
+        return res.status(403).send({ message: "fobidden Access" });
+    }
+});
 
 
 
