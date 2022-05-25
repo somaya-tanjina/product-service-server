@@ -44,6 +44,7 @@ async function run() {
 
         const userCollection = client.db("manufacturer").collection("user");
         const orderCollection = client.db("manufacturer").collection("order");
+        const reviewCollection = client.db("manufacturer").collection("review");
 
         app.get("/products", async (req, res) => {
             const query = {};
@@ -110,6 +111,17 @@ async function run() {
             const deletedItem = await orderCollection.deleteOne(querry);
             res.send(deletedItem);
         });
+
+
+// post review
+        app.post("/reviews", verifyjwt, async (req, res) => {
+            const review = req.body;
+           console.log(review); 
+            const result = await reviewCollection.insertOne(review);
+            res.send(result);
+        });
+
+
     } finally {
         //await client.close();
     }
