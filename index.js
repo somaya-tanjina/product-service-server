@@ -46,6 +46,22 @@ async function run() {
         const orderCollection = client.db("manufacturer").collection("order");
         const reviewCollection = client.db("manufacturer").collection("review");
 
+        const verifyAdmin = async (req, res, next) => {
+            const requester = req.decoded.email;
+
+            const requesterAccount = await userCollection.findOne({
+                email: requester,
+            });
+
+            if (requesterAccount.role === "admin") {
+                next();
+            } else {
+                res.status(403).send({ message: "forbidden Access" });
+            }
+
+            // await, next()
+        };
+
         app.get("/products", async (req, res) => {
             const query = {};
             const cursor = await productCollection.find(query).toArray();
@@ -81,6 +97,18 @@ async function run() {
             res.send({ result, token });
         });
 
+
+        //get User
+
+
+        app.get("/user", verifyjwt, async (req, res) => {
+            const users = await userCollection.find().toArray();
+            res.send(users);
+        });
+
+
+        // post Order
+
         app.post("/orders", async (req, res) => {
             const item = req.body;
             const result = await orderCollection.insertOne(item);
@@ -105,21 +133,65 @@ async function run() {
 
         //cancel order
 
-        app.delete("/product/:id",verifyjwt, async (req, res) => {
+        app.delete("/product/:id", verifyjwt, async (req, res) => {
             const id = req.params.id;
             const querry = { _id: ObjectId(id) };
             const deletedItem = await orderCollection.deleteOne(querry);
             res.send(deletedItem);
         });
 
-
-// post review
+        // post review
         app.post("/reviews", verifyjwt, async (req, res) => {
             const review = req.body;
-           console.log(review); 
+            console.log(review);
             const result = await reviewCollection.insertOne(review);
             res.send(result);
         });
+
+        // get reviews
+        app.get("/reviews", async (req, res) => {
+            const query = {};
+            const cursor = await reviewCollection.find(query).toArray();
+            res.send(cursor);
+        });
+
+        //Admin
+
+        app.put(
+            "/user/admin/:email",
+            verifyjwt,
+            verifyAdmin,
+            async (req, res) => {
+                const email = req.params.email;
+                const filter = { email: email };
+                const updateDoc = {
+                    $set: { role: "admin" },
+                };
+                const result = await userCollection.updateOne(
+                    filter,
+                    updateDoc
+                );
+
+                return res.send(result);
+            }
+        );
+
+        app.get("/admin/:email", async (req, res) => {
+            const email = req.params.email;
+            const user = await userCollection.findOne({ email: email });
+            const isAdmin = user.role === "admin";
+            res.send({ admin: isAdmin });
+        });
+
+
+//add product
+        app.post("/products", verifyjwt, async (req, res) => {
+            const product = req.body;
+            const result = await productCollection.insertOne(product);
+            res.send(result);
+        });
+
+
 
 
     } finally {
