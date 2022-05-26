@@ -1,3 +1,7 @@
+# thrive Manufacture
+My project [https://manufacture-7c7b0.web.app/](https://manufacture-7c7b0.web.app/).
+
+
 ### Features
 
 * Easy navigation
