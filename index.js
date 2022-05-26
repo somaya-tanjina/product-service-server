@@ -47,7 +47,9 @@ async function run() {
 
         const userCollection = client.db("manufacturer").collection("user");
         const orderCollection = client.db("manufacturer").collection("order");
-        const paymentCollection = client.db("manufacturer").collection("payment");
+        const paymentCollection = client
+            .db("manufacturer")
+            .collection("payment");
         const reviewCollection = client.db("manufacturer").collection("review");
 
         const verifyAdmin = async (req, res, next) => {
@@ -74,7 +76,7 @@ async function run() {
 
         // delete product
 
-        app.delete("/product/:id", verifyjwt,verifyAdmin, async (req, res) => {
+        app.delete("/product/:id", verifyjwt, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const querry = { _id: ObjectId(id) };
             const deletedItem = await productCollection.deleteOne(querry);
@@ -173,8 +175,8 @@ async function run() {
             }
         });
 
-// update order paid or not
-        app.patch("/order/:id", async (req, re) => {
+        // update order paid or not
+        app.patch("/order/:id", async (req, res) => {
             const id = req.params.id;
             const payment = req.body;
             const filter = { _id: ObjectId(id) };
@@ -189,11 +191,10 @@ async function run() {
                 filter,
                 updatedDoc
             );
-            res.send(updatedDoc);
+            res.send(updatedOrder);
         });
 
-
-// get orderby id
+        // get orderby id
         app.get("/orders/:id", verifyjwt, async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
@@ -201,10 +202,7 @@ async function run() {
             res.send(result);
         });
 
-
-// pay Order
-
-
+        // pay Order
 
         app.post("/create-payment-intent", verifyjwt, async (req, res) => {
             const appoints = req.body;
@@ -222,7 +220,6 @@ async function run() {
             });
         });
 
-
         //cancel order
 
         app.delete("/order/:id", verifyjwt, async (req, res) => {
@@ -232,9 +229,7 @@ async function run() {
             res.send(deletedItem);
         });
 
-
-//Admin delete order that are not paid
-
+        //Admin delete order that are not paid
 
         app.delete("/orders/:id", verifyjwt, verifyAdmin, async (req, res) => {
             const id = req.params.id;
@@ -243,13 +238,48 @@ async function run() {
             res.send(deletedItem);
         });
 
-
         // get all order
         app.get("/alorders", verifyjwt, async (req, res) => {
             const query = {};
             const cursor = await orderCollection.find(query).toArray();
             res.send(cursor);
         });
+
+        //Admin update status of ordered product
+        app.patch("/orders/:id", async (req, res) => {
+            const id = req.params.id;
+            const status = req.body;
+            const filter = { _id: ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    status: status.status,
+                },
+            };
+            const updatedOrder = await orderCollection.updateOne(
+                filter,
+                updatedDoc
+            );
+            res.send(updatedOrder);
+        });
+
+        //const result = await paymentCollection.insertOne(payment);
+
+        // app.patch("/api/orders/shipped/:id", async (req, res) => {
+        //     const id = req.params.id;
+        //     const status = req.body;
+        //     const filter = { _id: ObjectId(id) };
+        //     const updatedDoc = {
+        //         $set: {
+        //             status: status.status,
+        //         },
+        //     };
+        //     const updatedBooking = await bookingCollection.updateOne(
+        //         filter,
+        //         updatedDoc
+        //     );
+        //     res.send(updatedBooking);
+        // });
+
         // post review
         app.post("/reviews", verifyjwt, async (req, res) => {
             const review = req.body;
@@ -267,16 +297,24 @@ async function run() {
 
         //Admin
 
-        app.put("/users/admin/:email", verifyjwt,verifyAdmin, async (req, res) => {
-            const email = req.params.email;
-            const filter = { email: email };
-            const updateDoc = {
-                $set: { role: "admin" },
-            };
-            const result = await userCollection.updateOne(filter, updateDoc);
+        app.put(
+            "/users/admin/:email",
+            verifyjwt,
+            verifyAdmin,
+            async (req, res) => {
+                const email = req.params.email;
+                const filter = { email: email };
+                const updateDoc = {
+                    $set: { role: "admin" },
+                };
+                const result = await userCollection.updateOne(
+                    filter,
+                    updateDoc
+                );
 
-            return res.send(result);
-        });
+                return res.send(result);
+            }
+        );
 
         app.get("/admin/:email", verifyjwt, async (req, res) => {
             const email = req.params.email;
