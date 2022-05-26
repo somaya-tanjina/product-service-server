@@ -110,7 +110,7 @@ async function run() {
 
         //get User
 
-        app.get("/user", verifyjwt, async (req, res) => {
+        app.get("/users", verifyjwt, async (req, res) => {
             const users = await userCollection.find().toArray();
             res.send(users);
         });
@@ -201,24 +201,16 @@ async function run() {
 
         //Admin
 
-        app.put(
-            "/user/admin/:email",
-            verifyjwt,
-            verifyAdmin,
-            async (req, res) => {
-                const email = req.params.email;
-                const filter = { email: email };
-                const updateDoc = {
-                    $set: { role: "admin" },
-                };
-                const result = await userCollection.updateOne(
-                    filter,
-                    updateDoc
-                );
+        app.put("/users/admin/:email", verifyjwt, async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const updateDoc = {
+                $set: { role: "admin" },
+            };
+            const result = await userCollection.updateOne(filter, updateDoc);
 
-                return res.send(result);
-            }
-        );
+            return res.send(result);
+        });
 
         app.get("/admin/:email", async (req, res) => {
             const email = req.params.email;
