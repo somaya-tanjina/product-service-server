@@ -232,6 +232,18 @@ async function run() {
             res.send(deletedItem);
         });
 
+
+//Admin delete order that are not paid
+
+
+        app.delete("/orders/:id", verifyjwt, verifyAdmin, async (req, res) => {
+            const id = req.params.id;
+            const querry = { _id: ObjectId(id) };
+            const deletedItem = await orderCollection.deleteOne(querry);
+            res.send(deletedItem);
+        });
+
+
         // get all order
         app.get("/alorders", verifyjwt, async (req, res) => {
             const query = {};
