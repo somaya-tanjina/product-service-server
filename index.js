@@ -68,6 +68,17 @@ async function run() {
             res.send(cursor);
         });
 
+        // delete product
+
+        app.delete("/product/:id", verifyjwt, async (req, res) => {
+            const id = req.params.id;
+            const querry = { _id: ObjectId(id) };
+            const deletedItem = await productCollection.deleteOne(querry);
+            res.send(deletedItem);
+        });
+
+        //get by id
+
         app.get("/product/:id", async (req, res) => {
             const id = req.params.id;
             const querry = { _id: ObjectId(id) };
@@ -97,15 +108,42 @@ async function run() {
             res.send({ result, token });
         });
 
-
         //get User
-
 
         app.get("/user", verifyjwt, async (req, res) => {
             const users = await userCollection.find().toArray();
             res.send(users);
         });
 
+        // get specific user
+
+        app.get("/user/:email", verifyjwt, async (req, res) => {
+            const email = req.params.email;
+            const user = await userCollection.findOne({ email: email });
+            res.send(user);
+        });
+
+        // update User
+        app.patch("/user/:email", verifyjwt, async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const updatedProfile = req.body;
+            console.log(filter);
+            const updatedDoc = {
+                $set: {
+                    name: updatedProfile.name,
+                    number: updatedProfile.number,
+                    location: updatedProfile.location,
+                    education: updatedProfile.education,
+                },
+            };
+
+            const updatedUser = await userCollection.updateOne(
+                filter,
+                updatedDoc
+            );
+            res.send(updatedUser);
+        });
 
         // post Order
 
@@ -133,13 +171,19 @@ async function run() {
 
         //cancel order
 
-        app.delete("/product/:id", verifyjwt, async (req, res) => {
+        app.delete("/order/:id", verifyjwt, async (req, res) => {
             const id = req.params.id;
             const querry = { _id: ObjectId(id) };
             const deletedItem = await orderCollection.deleteOne(querry);
             res.send(deletedItem);
         });
 
+        // get all order
+        app.get("/alorders", verifyjwt, async (req, res) => {
+            const query = {};
+            const cursor = await orderCollection.find(query).toArray();
+            res.send(cursor);
+        });
         // post review
         app.post("/reviews", verifyjwt, async (req, res) => {
             const review = req.body;
@@ -183,17 +227,12 @@ async function run() {
             res.send({ admin: isAdmin });
         });
 
-
-//add product
+        //add product
         app.post("/products", verifyjwt, async (req, res) => {
             const product = req.body;
             const result = await productCollection.insertOne(product);
             res.send(result);
         });
-
-
-
-
     } finally {
         //await client.close();
     }
